@@ -55,12 +55,12 @@ fn h264_reader(c: &mut Criterion) {
         if nal.is_complete() {
             let mut r = nal.rbsp_bytes();
             loop {
-                let buf = r.fill_buf().unwrap();
-                let len = buf.len();
+                let ibuf = r.fill_buf().unwrap();
+                let len = ibuf.len();
                 if len == 0 {
                     break;
                 }
-                rbsp_len += u64::try_from(buf.len()).unwrap();
+                rbsp_len += u64::try_from(ibuf.len()).unwrap();
                 r.consume(len);
             }
         }
