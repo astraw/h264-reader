@@ -1,18 +1,55 @@
 use std::io::Read;
 
 use h264_reader::annexb::AnnexBReader;
+use h264_reader::nal::slice::SliceHeader;
 use h264_reader::nal::{Nal, RefNal, UnitType};
 use h264_reader::push::NalInterest;
 
 fn main() {
-    let mut calls = Vec::new();
+    let mut parsing_ctx = h264_reader::Context::default();
     let mut reader = AnnexBReader::accumulate(|nal: RefNal<'_>| {
-        let nal_unit_type = nal.header().unwrap().nal_unit_type();
-        calls.push((nal_unit_type, nal.is_complete()));
-        match nal_unit_type {
-            UnitType::SeqParameterSet => NalInterest::Buffer,
-            _ => NalInterest::Ignore,
+        if nal.is_complete() {
+            let nal_unit_type = nal.header().unwrap().nal_unit_type();
+
+            dbg!(nal_unit_type);
+            match nal_unit_type {
+                UnitType::SeqParameterSet => {
+                    let sps =
+                        h264_reader::nal::sps::SeqParameterSet::from_bits(nal.rbsp_bits()).unwrap();
+                    // println!("{sps:?}");
+                    dbg!(&sps);
+                    parsing_ctx.put_seq_param_set(sps);
+                }
+                UnitType::PicParameterSet => {
+                    let pps = h264_reader::nal::pps::PicParameterSet::from_bits(
+                        &parsing_ctx,
+                        nal.rbsp_bits(),
+                    )
+                    .unwrap();
+                    // println!("{pps:?}");
+                    dbg!(&pps);
+                    parsing_ctx.put_pic_param_set(pps);
+                }
+                UnitType::SliceLayerWithoutPartitioningIdr
+                | UnitType::SliceLayerWithoutPartitioningNonIdr => {
+                    match SliceHeader::from_bits(
+                        &parsing_ctx,
+                        &mut nal.rbsp_bits(),
+                        nal.header().unwrap(),
+                    ) {
+                        Err(e) => {
+                            panic!("SliceHeaderError: {:?}", e);
+                        }
+                        Ok((slice_header, _sps, _pps)) => {
+                            // println!("{slice_header:?}");
+                            dbg!(&slice_header);
+                        }
+                    }
+                }
+                _ => {} // ignore
+            }
         }
+        NalInterest::Buffer
     });
 
     let fname = std::env::args()
@@ -28,8 +65,5 @@ fn main() {
             break;
         }
         reader.push(&buf[..sz]);
-    }
-    for call in calls.iter() {
-        println!("{call:?}");
     }
 }
