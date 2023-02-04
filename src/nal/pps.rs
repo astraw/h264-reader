@@ -1,4 +1,4 @@
-use super::sps;
+use super::sps::{self, ScalingList};
 use crate::{rbsp, Context};
 use crate::rbsp::BitRead;
 
@@ -131,31 +131,30 @@ impl SliceGroup {
 
 #[derive(Debug, Clone)]
 struct PicScalingMatrix {
-    // TODO
+    scaling_list: Vec<ScalingList>,
 }
 impl PicScalingMatrix {
     fn read<R: BitRead>(r: &mut R, sps: &sps::SeqParameterSet, transform_8x8_mode_flag: bool) -> Result<Option<PicScalingMatrix>,PpsError> {
         let pic_scaling_matrix_present_flag = r.read_bool("pic_scaling_matrix_present_flag")?;
         Ok(if pic_scaling_matrix_present_flag {
-            let mut scaling_list4x4 = vec!();
-            let mut scaling_list8x8 = vec!();
 
             let count = if transform_8x8_mode_flag {
                 if sps.chroma_info.chroma_format == sps::ChromaFormat::YUV444 { 12 } else { 8 }
             } else {
                 0
             };
+            let mut scaling_list = Vec::with_capacity(6+count);
             for i in 0..6+count {
                 let seq_scaling_list_present_flag = r.read_bool("seq_scaling_list_present_flag")?;
                 if seq_scaling_list_present_flag {
                     if i < 6 {
-                        scaling_list4x4.push(sps::ScalingList::read(r, 16).map_err(PpsError::ScalingMatrix)?);
+                        scaling_list.push(sps::ScalingList::read(r, 16).map_err(PpsError::ScalingMatrix)?);
                     } else {
-                        scaling_list8x8.push(sps::ScalingList::read(r, 64).map_err(PpsError::ScalingMatrix)?);
+                        scaling_list.push(sps::ScalingList::read(r, 64).map_err(PpsError::ScalingMatrix)?);
                     }
                 }
             }
-            Some(PicScalingMatrix { })
+            Some(PicScalingMatrix { scaling_list })
         } else {
             None
         })
