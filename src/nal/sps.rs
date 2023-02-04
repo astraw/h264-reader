@@ -92,7 +92,7 @@ impl Profile {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 pub struct ConstraintFlags(u8);
 impl From<u8> for ConstraintFlags {
     fn from(v: u8) -> Self {
@@ -241,7 +241,7 @@ impl From<ProfileIdc> for u8 {
 }
 
 // either ScalingList4x4 or ScalingList8x8
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ScalingList {
     size: u8,
     delta_scale_vec: Vec<i8>,
@@ -284,7 +284,7 @@ impl From<BitReaderError> for ScalingMatrixError {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SeqScalingMatrix {
     scaling_list: Vec<ScalingList>,
 }
@@ -313,7 +313,7 @@ impl SeqScalingMatrix {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ChromaInfo {
     pub chroma_format: ChromaFormat,
     pub separate_colour_plane_flag: bool,
@@ -379,7 +379,7 @@ impl From<BitReaderError> for PicOrderCntError {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum PicOrderCntType {
     TypeZero {
         log2_max_pic_order_cnt_lsb_minus4: u8
@@ -440,7 +440,7 @@ impl PicOrderCntType {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum FrameMbsFlags {
     Frames,
     Fields {
@@ -483,7 +483,7 @@ impl FrameCropping {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum AspectRatioInfo {
     Unspecified,
     Ratio1_1,
@@ -572,7 +572,7 @@ impl AspectRatioInfo {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum OverscanAppropriate {
     Unspecified,
     Appropriate,
@@ -594,7 +594,7 @@ impl OverscanAppropriate {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum VideoFormat {
     Component,
     PAL,
@@ -619,7 +619,7 @@ impl VideoFormat {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ColourDescription {
     pub colour_primaries: u8,
     pub transfer_characteristics: u8,
@@ -640,7 +640,7 @@ impl ColourDescription {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct VideoSignalType {
     pub video_format: VideoFormat,
     pub video_full_range_flag: bool,
@@ -661,7 +661,7 @@ impl VideoSignalType {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ChromaLocInfo {
     pub chroma_sample_loc_type_top_field: u32,
     pub chroma_sample_loc_type_bottom_field: u32,
@@ -680,7 +680,7 @@ impl ChromaLocInfo {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TimingInfo {
     pub num_units_in_tick: u32,
     pub time_scale: u32,
@@ -701,7 +701,7 @@ impl TimingInfo {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct CpbSpec {
     bit_rate_value_minus1: u32,
     cpb_size_value_minus1: u32,
@@ -718,7 +718,7 @@ impl CpbSpec {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct HrdParameters {
     pub bit_rate_scale: u8,
     pub cpb_size_scale: u8,
@@ -760,7 +760,7 @@ impl HrdParameters {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct BitstreamRestrictions {
     pub motion_vectors_over_pic_boundaries_flag: bool,
     pub max_bytes_per_pic_denom: u32,
@@ -789,7 +789,7 @@ impl BitstreamRestrictions {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct VuiParameters {
     pub aspect_ratio_info: Option<AspectRatioInfo>,
     pub overscan_appropriate: OverscanAppropriate,
@@ -825,7 +825,7 @@ impl VuiParameters {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SeqParameterSet {
     pub profile_idc: ProfileIdc,
     pub constraint_flags: ConstraintFlags,
