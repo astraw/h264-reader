@@ -5,6 +5,7 @@ use std::fmt;
 use crate::nal::pps::ParamSetId;
 use crate::nal::pps::ParamSetIdError;
 use std::fmt::Debug;
+use std::convert::TryInto;
 
 #[derive(Debug)]
 pub enum SpsError {
@@ -239,21 +240,26 @@ impl From<ProfileIdc> for u8 {
     fn from(v: ProfileIdc) -> Self { v.0 }
 }
 
+// either ScalingList4x4 or ScalingList8x8
+#[derive(Debug, Clone)]
 pub struct ScalingList {
-    // TODO
+    size: u8,
+    delta_scale_vec: Vec<i8>,
 }
 impl ScalingList {
     pub fn read<R: BitRead>(r: &mut R, size: u8) -> Result<ScalingList,ScalingMatrixError> {
-        let mut scaling_list = vec!();
+        let mut scaling_list = Vec::with_capacity(size.try_into().unwrap());
         let mut last_scale = 8;
         let mut next_scale = 8;
         let mut _use_default_scaling_matrix_flag = false;
+        let mut delta_scale_vec = Vec::with_capacity(size.try_into().unwrap());
         for j in 0..size {
             if next_scale != 0 {
                 let delta_scale = r.read_se("delta_scale")?;
                 if delta_scale < -128 || delta_scale > 127 {
                     return Err(ScalingMatrixError::DeltaScaleOutOfRange(delta_scale));
                 }
+                delta_scale_vec.push(delta_scale.try_into().unwrap());
                 next_scale = (last_scale + delta_scale + 256) % 256;
                 _use_default_scaling_matrix_flag = j == 0 && next_scale == 0;
             }
@@ -261,7 +267,7 @@ impl ScalingList {
             scaling_list.push(new_value);
             last_scale = new_value;
         }
-        Ok(ScalingList { })
+        Ok(ScalingList { size, delta_scale_vec })
     }
 }
 
@@ -280,30 +286,30 @@ impl From<BitReaderError> for ScalingMatrixError {
 
 #[derive(Debug, Clone)]
 pub struct SeqScalingMatrix {
-    // TODO
+    scaling_list: Vec<ScalingList>,
 }
 impl Default for SeqScalingMatrix {
     fn default() -> Self {
-        SeqScalingMatrix { }
+        SeqScalingMatrix { scaling_list: vec![]}
     }
 }
 impl SeqScalingMatrix {
     fn read<R: BitRead>(r: &mut R, chroma_format_idc: u32) -> Result<SeqScalingMatrix,ScalingMatrixError> {
-        let mut scaling_list4x4 = vec!();
-        let mut scaling_list8x8 = vec!();
-
         let count = if chroma_format_idc == 3 { 12 } else { 8 };
+        let mut scaling_list = Vec::with_capacity(count);
         for i in 0..count {
             let seq_scaling_list_present_flag = r.read_bool("seq_scaling_list_present_flag")?;
             if seq_scaling_list_present_flag {
                 if i < 6 {
-                    scaling_list4x4.push(ScalingList::read(r, 16)?);
+                    // 4x4
+                    scaling_list.push(ScalingList::read(r, 16)?);
                 } else {
-                    scaling_list8x8.push(ScalingList::read(r, 64)?);
+                    // 8x8
+                    scaling_list.push(ScalingList::read(r, 64)?);
                 }
             }
         }
-        Ok(SeqScalingMatrix { })
+        Ok(SeqScalingMatrix { scaling_list })
     }
 }
 
