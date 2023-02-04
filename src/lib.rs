@@ -45,6 +45,7 @@ impl Context {
     }
     pub fn put_seq_param_set(&mut self, sps: nal::sps::SeqParameterSet) {
         let i = sps.seq_parameter_set_id.id() as usize;
+        // This will panic if more than 32 SPS received.
         self.seq_param_sets[i] = Some(sps);
     }
     pub fn pps_by_id(&self, id: nal::pps::ParamSetId) -> Option<&nal::pps::PicParameterSet> {
@@ -59,6 +60,7 @@ impl Context {
     }
     pub fn put_pic_param_set(&mut self, pps: nal::pps::PicParameterSet) {
         let i = pps.pic_parameter_set_id.id() as usize;
+        // This will panic if more than 32 PPS received.
         self.pic_param_sets[i] = Some(pps);
     }
 }
